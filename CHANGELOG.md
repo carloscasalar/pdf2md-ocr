@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.3] - 2025-11-16
 
 ### Added
+
 - Initial minimal CLI implementation wrapping marker-pdf library
 - Command-line interface with `pdf2md-ocr` command
 - Support for PDF to Markdown conversion
@@ -23,14 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Project documentation (PROMPT.md, PYPI_CONFIG.md, REFERENCE.md)
 - Sample PDF file for testing (pdf-samples/only-text.pdf)
 
-### Changed
-- **BREAKING**: License changed from MIT to GPL-3.0-or-later for compliance with marker-pdf dependency
-
 ### Fixed
+
 - Correct handling of `text_from_rendered()` tuple return value (text, extension, images)
 - Suppress verbose logging from marker-pdf dependencies (GRPC, GLOG)
 
 ### Technical Details
+
 - Uses marker-pdf v1.10.1 for PDF conversion
 - Built with Python 3.10+ support
 - Uses uv for dependency management
