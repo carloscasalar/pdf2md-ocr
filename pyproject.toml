@@ -21,6 +21,9 @@ classifiers = [
 
 dependencies = ["marker-pdf==1.10.1", "click", "rich"]
 
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0"]
+
 [project.scripts]
 pdf2md-ocr = "pdf2md_ocr.cli:main"
 
