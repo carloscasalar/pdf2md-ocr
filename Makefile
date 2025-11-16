@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test test-verbose clean build lint format check
+.PHONY: help install install-dev test test-verbose clean clean-cache build lint format check
 
 # Default target
 help:
@@ -8,6 +8,7 @@ help:
 	@echo "  make test           - Run tests"
 	@echo "  make test-verbose   - Run tests with verbose output"
 	@echo "  make clean          - Remove build artifacts and cache"
+	@echo "  make clean-cache    - Remove AI model cache (~3GB)"
 	@echo "  make build          - Build distribution packages"
 	@echo "  make run            - Run pdf2md-ocr CLI (requires PDF_FILE variable)"
 
@@ -44,6 +45,29 @@ clean:
 	rm -rf out/
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete
+
+# Clean AI model cache (frees ~3GB of disk space)
+clean-cache:
+	@echo "This will delete the AI model cache (~3GB)."
+	@echo "Models will be re-downloaded on next run."
+	@read -p "Are you sure? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		if [ -f .venv/bin/python ]; then \
+			CACHE_DIR=$$(.venv/bin/python -c "from platformdirs import user_cache_dir; from pathlib import Path; print(Path(user_cache_dir('datalab')) / 'models')"); \
+		else \
+			CACHE_DIR=$$(python -c "from platformdirs import user_cache_dir; from pathlib import Path; print(Path(user_cache_dir('datalab')) / 'models')"); \
+		fi; \
+		if [ -d "$$CACHE_DIR" ]; then \
+			echo "Removing $$CACHE_DIR..."; \
+			rm -rf "$$CACHE_DIR"; \
+			echo "Cache cleared successfully!"; \
+		else \
+			echo "Cache directory not found: $$CACHE_DIR"; \
+		fi; \
+	else \
+		echo "Cancelled."; \
+	fi
 
 # Build distribution packages
 build: clean

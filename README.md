@@ -39,6 +39,7 @@ The first time you run pdf2md-ocr, it will download ~2-3GB of AI models. These m
 
 - Models are stored in `~/Library/Caches/datalab/models/` (macOS) or equivalent cache directory on your OS
 - Uses platformdirs to determine the appropriate cache location for your system
+- To clear the cache, simply delete the cache directory (it will be re-downloaded on next run)
 
 Subsequent runs will be much faster since the models are already cached.
 
@@ -63,6 +64,9 @@ make test-verbose
 
 # Clean build artifacts
 make clean
+
+# Clear AI model cache (frees ~3GB disk space)
+make clean-cache
 
 # Build distribution packages
 make build
