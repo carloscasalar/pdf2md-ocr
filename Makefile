@@ -47,8 +47,13 @@ clean:
 
 # Build distribution packages
 build: clean
-	python -m pip install --upgrade build
-	python -m build
+	@if [ -f .venv/bin/python ]; then \
+		.venv/bin/python -m pip install --upgrade build; \
+		.venv/bin/python -m build; \
+	else \
+		python -m pip install --upgrade build; \
+		python -m build; \
+	fi
 
 # Run the CLI (example: make run PDF_FILE=sample.pdf OUTPUT=output.md)
 run:
@@ -57,8 +62,16 @@ run:
 		echo "Usage: make run PDF_FILE=input.pdf [OUTPUT=output.md]"; \
 		exit 1; \
 	fi
-	@if [ -n "$(OUTPUT)" ]; then \
-		pdf2md-ocr "$(PDF_FILE)" -o "$(OUTPUT)"; \
+	@if [ -f .venv/bin/pdf2md-ocr ]; then \
+		if [ -n "$(OUTPUT)" ]; then \
+			.venv/bin/pdf2md-ocr "$(PDF_FILE)" -o "$(OUTPUT)"; \
+		else \
+			.venv/bin/pdf2md-ocr "$(PDF_FILE)"; \
+		fi; \
 	else \
-		pdf2md-ocr "$(PDF_FILE)"; \
+		if [ -n "$(OUTPUT)" ]; then \
+			pdf2md-ocr "$(PDF_FILE)" -o "$(OUTPUT)"; \
+		else \
+			pdf2md-ocr "$(PDF_FILE)"; \
+		fi; \
 	fi
