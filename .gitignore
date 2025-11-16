@@ -37,6 +37,7 @@ Thumbs.db
 out/
 *.md
 !README.md
+!CHANGELOG.md
 !PROMPT.md
 !PYPI_CONFIG.md
 !REFERENCE.md
