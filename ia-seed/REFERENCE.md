@@ -1,33 +1,40 @@
 # Minimal Implementation Reference
 
-## Example Working Code
+## Example Working Code (marker-pdf v1.10.1)
 
 The **essence** of what works (stripped of complexity):
 
 ```python
+import os
+# Suppress verbose logging
+os.environ["GRPC_VERBOSITY"] = "ERROR"
+os.environ["GLOG_minloglevel"] = "2"
+
 from pathlib import Path
 import click
-from marker.convert import convert_single_pdf
-from marker.models import load_all_models
+from marker.converters.pdf import PdfConverter
+from marker.models import create_model_dict
+from marker.output import text_from_rendered
 
 @click.command()
-@click.argument('input_pdf', type=click.Path(exists=True))
-@click.option('--output', '-o', type=click.Path(), help='Output markdown file')
-def main(input_pdf, output):
+@click.argument('input_pdf', type=click.Path(exists=True, path_type=Path))
+@click.option('--output', '-o', type=click.Path(path_type=Path), help='Output markdown file')
+def main(input_pdf: Path, output: Path | None):
     """Convert PDF to Markdown using Marker AI."""
 
     # Load models (downloads ~2GB first time, then cached)
-    model_list = load_all_models()
-
-    # Convert PDF
-    full_text, images, metadata = convert_single_pdf(
-        input_pdf,
-        model_list
-    )
+    models = create_model_dict()
+    
+    # Create converter and convert PDF
+    converter = PdfConverter(artifact_dict=models)
+    rendered = converter(str(input_pdf))
+    
+    # Extract markdown text
+    markdown_text = text_from_rendered(rendered)
 
     # Save output
-    output_path = Path(output or f"{Path(input_pdf).stem}.md")
-    output_path.write_text(full_text)
+    output_path = output or input_pdf.with_suffix(".md")
+    output_path.write_text(markdown_text, encoding="utf-8")
 
     click.echo(f"✓ Converted to {output_path}")
 ```
