@@ -5,7 +5,9 @@ description = "Simple CLI tool to convert PDFs to Markdown using Marker AI"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "GPL-3.0-or-later" }
-authors = [{ name = "Carlos Castillo", email = "castillo.st+pdf2md-ocr@gmail.com" }]
+authors = [
+    { name = "Carlos Castillo", email = "castillo.st+pdf2md-ocr@gmail.com" },
+]
 keywords = ["pdf", "markdown", "ocr", "conversion", "cli"]
 classifiers = [
     "Development Status :: 3 - Alpha",
