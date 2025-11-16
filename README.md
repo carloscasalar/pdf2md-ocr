@@ -35,7 +35,10 @@ pdf2md-ocr --version
 
 ## First Run
 
-The first time you run pdf2md-ocr, it will download ~2GB of AI models from Hugging Face. These models are cached locally (in `~/.cache/huggingface` by default) and reused for all future conversions.
+The first time you run pdf2md-ocr, it will download ~2-3GB of AI models. These models are cached locally and reused for all future conversions:
+
+- Models are stored in `~/Library/Caches/datalab/models/` (macOS) or equivalent cache directory on your OS
+- Uses platformdirs to determine the appropriate cache location for your system
 
 Subsequent runs will be much faster since the models are already cached.
 
