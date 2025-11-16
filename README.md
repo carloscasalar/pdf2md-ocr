@@ -26,6 +26,9 @@ pdf2md-ocr document.pdf
 # Specify output file
 pdf2md-ocr document.pdf -o result.md
 
+# Show cache location and size
+pdf2md-ocr document.pdf --show-cache-info
+
 # Show help
 pdf2md-ocr --help
 
@@ -35,11 +38,20 @@ pdf2md-ocr --version
 
 ## First Run
 
-The first time you run pdf2md-ocr, it will download ~2-3GB of AI models. These models are cached locally and reused for all future conversions:
+The first time you run pdf2md-ocr, it will download ~2-3GB of AI models. These models are cached locally and reused for all future conversions.
 
-- Models are stored in `~/Library/Caches/datalab/models/` (macOS) or equivalent cache directory on your OS
-- Uses platformdirs to determine the appropriate cache location for your system
-- To clear the cache, simply delete the cache directory (it will be re-downloaded on next run)
+**To see where models are cached:**
+
+```bash
+pdf2md-ocr input.pdf --show-cache-info
+```
+
+This will show the cache location and size after conversion. Cache locations, typically:
+- macOS: `~/Library/Caches/datalab/models/`
+- Linux: `~/.cache/datalab/models/`
+- Windows: `%LOCALAPPDATA%\datalab\models\`
+
+**To clear the cache:** Simply delete the cache directory shown in the info above, or use `make clean-cache` if developing locally.
 
 Subsequent runs will be much faster since the models are already cached.
 
