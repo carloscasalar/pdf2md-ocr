@@ -24,13 +24,13 @@ def main(input_pdf: Path, output: Path | None):
 
     # Load models (downloads ~2GB first time, then cached)
     models = create_model_dict()
-    
+
     # Create converter and convert PDF
     converter = PdfConverter(artifact_dict=models)
     rendered = converter(str(input_pdf))
-    
-    # Extract markdown text
-    markdown_text = text_from_rendered(rendered)
+
+    # Extract markdown text (returns tuple: text, extension, images)
+    markdown_text, _, _ = text_from_rendered(rendered)
 
     # Save output
     output_path = output or input_pdf.with_suffix(".md")

@@ -35,7 +35,6 @@ Thumbs.db
 
 # Project specific
 out/
-*.pdf
 *.md
 !README.md
 !PROMPT.md
