@@ -8,26 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.3] - 2025-11-16
 
 ### Added
-
-- Initial minimal CLI implementation wrapping marker-pdf library
-- Command-line interface with `pdf2md-ocr` command
-- Support for PDF to Markdown conversion
-- Optional output path specification with `-o` flag
-- Automatic output filename generation (input name with .md extension)
-- Version command `--version`
-- Help command `--help`
+- Changed to a simpler implementation of `pdf2md-ocr`:
+  - Optional output path specification with `-o` flag
+  - Automatic output filename generation (input name with .md extension)
+  - Version command `--version`
+  - Help command `--help`
 - Comprehensive test suite with pytest
 - Tests for PDF conversion functionality
 - Tests for default output path behavior
-- GitHub Actions workflow for automated PyPI publishing using Trusted Publishers
-- README with usage instructions and examples
-- Project documentation (PROMPT.md, PYPI_CONFIG.md, REFERENCE.md)
-- Sample PDF file for testing (pdf-samples/only-text.pdf)
-
-### Fixed
-
-- Correct handling of `text_from_rendered()` tuple return value (text, extension, images)
-- Suppress verbose logging from marker-pdf dependencies (GRPC, GLOG)
 
 ### Technical Details
 
