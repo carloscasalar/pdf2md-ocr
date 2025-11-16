@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed to a simpler implementation of `pdf2md-ocr`:
   - Optional output path specification with `-o` flag
   - Automatic output filename generation (input name with .md extension)
+  - Option to show cache info so the user can easily clean it `--show-cache-info`
   - Version command `--version`
   - Help command `--help`
 - Comprehensive test suite with pytest
