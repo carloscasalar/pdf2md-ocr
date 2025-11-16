@@ -54,4 +54,6 @@ This tool is a minimal wrapper around the excellent [marker-pdf](https://github.
 
 ## License
 
-MIT
+GPL-3.0-or-later
+
+This project is licensed under the GNU General Public License v3.0 or later to comply with the [marker-pdf](https://github.com/VikParuchuri/marker) library license (GPL-3.0-or-later).
