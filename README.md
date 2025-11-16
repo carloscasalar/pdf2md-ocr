@@ -44,6 +44,30 @@ Subsequent runs will be much faster since the models are already cached.
 - Python 3.10 or higher
 - ~2GB disk space for AI models (one-time download)
 
+## Development
+
+For development, a Makefile is provided with common tasks:
+
+```bash
+# Install dependencies
+make install-dev
+
+# Run tests
+make test
+
+# Run tests with verbose output
+make test-verbose
+
+# Clean build artifacts
+make clean
+
+# Build distribution packages
+make build
+
+# See all available commands
+make help
+```
+
 ## How It Works
 
 This tool is a minimal wrapper around the excellent [marker-pdf](https://github.com/VikParuchuri/marker) library, which uses AI models to:
