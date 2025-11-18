@@ -14,13 +14,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `--end-page M`: End conversion at page M (1-based, inclusive)
   - Both options are optional and can be combined for flexible page selection
   - Page numbering starts at 1 (not 0)
-- Test to verify page range functionality with three-page PDF sample
-
-### Technical Details
-
-- Page numbers are converted internally from 1-based (user-facing) to 0-based (Marker's format)
-- Validation ensures page numbers are >= 1 and start_page <= end_page
-- Full backward compatibility: no page range options means process all pages (existing behavior)
 
 ## [0.0.3] - 2025-11-16
 
