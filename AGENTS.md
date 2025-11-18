@@ -81,6 +81,7 @@ This file defines how AI/code agents should behave when working in this reposito
   - Avoid introducing new dependencies unless they add clear user value.
   - Never pin every transitive dependency; keep `pyproject.toml` clean.
   - Keep `uv.lock` updated when dependency graph changes.
+  - Use 2-space indentation for YAML files (CI workflows, configs), enforced via `.editorconfig`.
 
 ## 7. Versioning & Releases
 
