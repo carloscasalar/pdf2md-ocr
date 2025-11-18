@@ -139,8 +139,7 @@ def main(
     try:
         _validate_page_range(start_page, end_page)
     except ValueError as e:
-        click.echo(f"Error: {e}", err=True)
-        raise SystemExit(1)
+        raise click.BadParameter(str(e))
     
     # Build page range string for Marker
     page_range = _page_range_to_marker_format(start_page, end_page)
