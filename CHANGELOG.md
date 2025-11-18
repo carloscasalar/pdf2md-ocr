@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Both options are optional and can be combined for flexible page selection
   - Page numbering starts at 1 (not 0)
 
+[0.0.4]: https://github.com/carloscasalar/pdf2md-ocr/releases/tag/v0.0.4
+
 ## [0.0.3] - 2025-11-16
 
 ### Added
@@ -43,5 +45,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Versions 0.0.1 and 0.0.2 were part of a failed start and existed in a deleted repository.
 Version 0.0.3 represents the first official release of this project.
 
-[0.0.4]: https://github.com/carloscasalar/pdf2md-ocr/releases/tag/v0.0.4
 [0.0.3]: https://github.com/carloscasalar/pdf2md-ocr/releases/tag/v0.0.3

@@ -51,6 +51,7 @@ pdf2md-ocr --version
 - `--end-page M`: Ending page number (1-based, inclusive). If omitted, goes to the last page.
 
 Both options are optional and can be combined:
+
 - Use only `--start-page` to convert from a specific page to the end.
 - Use only `--end-page` to convert from the beginning to a specific page.
 - Use both to convert a specific range.
@@ -68,6 +69,7 @@ pdf2md-ocr input.pdf --show-cache-info
 ```
 
 This will show the cache location and size after conversion. Cache locations, typically:
+
 - macOS: `~/Library/Caches/datalab/models/`
 - Linux: `~/.cache/datalab/models/`
 - Windows: `%LOCALAPPDATA%\datalab\models\`
