@@ -1,33 +1,33 @@
 name: Run Tests
 
 on:
-    push:
-        branches:
-            - main
-            - "feat/**"
-    pull_request:
+  push:
+    branches:
+      - main
+      - "feat/**"
+  pull_request:
 
 jobs:
-    test:
-        runs-on: ubuntu-latest
+  test:
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-            - name: Set up Python 3.13
-              uses: actions/setup-python@v4
-              with:
-                  python-version: "3.13"
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13"
 
-            - name: Install uv
-              run: pip install uv
+      - name: Install uv
+        run: pip install uv
 
-            - name: Create virtual environment
-              run: uv venv
+      - name: Create virtual environment
+        run: uv venv
 
-            - name: Install dependencies
-              run: make install-dev
+      - name: Install dependencies
+        run: make install-dev
 
-            - name: Run tests
-              run: make test
+      - name: Run tests
+        run: make test
