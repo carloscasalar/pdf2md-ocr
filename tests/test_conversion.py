@@ -228,7 +228,7 @@ class TestPageRangeCliValidation:
             "--start-page", "0"
         ])
 
-        assert result.exit_code == 1
+        assert result.exit_code == 2
         assert "page numbering starts at 1" in result.output
 
     def test_cli_invalid_start_page_negative(self):
@@ -242,7 +242,7 @@ class TestPageRangeCliValidation:
             "--start-page", "-5"
         ])
 
-        assert result.exit_code == 1
+        assert result.exit_code == 2
         assert "page numbering starts at 1" in result.output
 
     def test_cli_invalid_end_page_zero(self):
@@ -256,7 +256,7 @@ class TestPageRangeCliValidation:
             "--end-page", "0"
         ])
 
-        assert result.exit_code == 1
+        assert result.exit_code == 2
         assert "page numbering starts at 1" in result.output
 
     def test_cli_invalid_start_greater_than_end(self):
@@ -271,5 +271,5 @@ class TestPageRangeCliValidation:
             "--end-page", "2"
         ])
 
-        assert result.exit_code == 1
+        assert result.exit_code == 2
         assert "cannot be greater than" in result.output
