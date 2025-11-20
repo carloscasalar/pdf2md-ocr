@@ -26,6 +26,15 @@ pdf2md-ocr document.pdf
 # Specify output file
 pdf2md-ocr document.pdf -o result.md
 
+# Convert specific page range (page numbering starts at 1)
+pdf2md-ocr document.pdf --start-page 2 --end-page 5
+
+# Convert from page 3 to the end
+pdf2md-ocr document.pdf --start-page 3
+
+# Convert from the beginning to page 10
+pdf2md-ocr document.pdf --end-page 10
+
 # Show cache location and size
 pdf2md-ocr document.pdf --show-cache-info
 
@@ -35,6 +44,19 @@ pdf2md-ocr --help
 # Show version
 pdf2md-ocr --version
 ```
+
+### Page Range Options
+
+- `--start-page N`: Starting page number (1-based, inclusive). If omitted, starts from page 1.
+- `--end-page M`: Ending page number (1-based, inclusive). If omitted, goes to the last page.
+
+Both options are optional and can be combined:
+
+- Use only `--start-page` to convert from a specific page to the end.
+- Use only `--end-page` to convert from the beginning to a specific page.
+- Use both to convert a specific range.
+
+**Important: Page numbering starts at 1** (not 0).
 
 ## First Run
 
@@ -47,6 +69,7 @@ pdf2md-ocr input.pdf --show-cache-info
 ```
 
 This will show the cache location and size after conversion. Cache locations, typically:
+
 - macOS: `~/Library/Caches/datalab/models/`
 - Linux: `~/.cache/datalab/models/`
 - Windows: `%LOCALAPPDATA%\datalab\models\`

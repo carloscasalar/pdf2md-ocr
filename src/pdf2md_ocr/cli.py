@@ -41,6 +41,54 @@ def format_size(size_bytes: int) -> str:
     return f"{size_bytes:.1f} TB"
 
 
+def _validate_page_range(start_page: int | None, end_page: int | None) -> None:
+    """Validate page range parameters.
+    
+    Args:
+        start_page: Starting page number (1-based).
+        end_page: Ending page number (1-based).
+    
+    Raises:
+        ValueError: If page numbers are invalid.
+    """
+    if start_page is not None and start_page < 1:
+        raise ValueError("--start-page must be >= 1 (page numbering starts at 1)")
+    if end_page is not None and end_page < 1:
+        raise ValueError("--end-page must be >= 1 (page numbering starts at 1)")
+    if start_page is not None and end_page is not None and start_page > end_page:
+        raise ValueError(f"--start-page ({start_page}) cannot be greater than --end-page ({end_page})")
+
+
+def _page_range_to_marker_format(start_page: int | None, end_page: int | None) -> str | None:
+    """Convert 1-based page range to Marker's page_range format (0-based).
+    
+    Marker uses 0-based page numbering in its page_range parameter.
+    
+    Args:
+        start_page: Starting page (1-based), inclusive.
+        end_page: Ending page (1-based), inclusive.
+    
+    Returns:
+        Page range string for Marker (e.g., "1-4" for pages 2-5 in 1-based), or None if no range.
+    """
+    if start_page is None and end_page is None:
+        return None
+    
+    # Convert to 0-based for Marker
+    marker_start = (start_page - 1) if start_page is not None else None
+    marker_end = (end_page - 1) if end_page is not None else None
+    
+    if marker_start is None and marker_end is not None:
+        # Only end specified: from beginning to end
+        return "-" + str(marker_end)
+    elif marker_start is not None and marker_end is None:
+        # Only start specified: from start to end of document
+        return str(marker_start) + "-"
+    else:
+        # Both specified
+        return f"{marker_start}-{marker_end}"
+
+
 @click.command()
 @click.argument("input_pdf", type=click.Path(exists=True, path_type=Path))
 @click.option(
@@ -50,30 +98,73 @@ def format_size(size_bytes: int) -> str:
     help="Output markdown file (default: same name as input with .md extension)",
 )
 @click.option(
+    "--start-page",
+    type=int,
+    default=None,
+    help="Start page number (1-based, inclusive). If omitted, starts from page 1.",
+)
+@click.option(
+    "--end-page",
+    type=int,
+    default=None,
+    help="End page number (1-based, inclusive). If omitted, goes to the last page.",
+)
+@click.option(
     "--show-cache-info",
     is_flag=True,
     help="Show cache location and size after conversion",
 )
-@click.version_option(version="0.0.3", prog_name="pdf2md-ocr")
-def main(input_pdf: Path, output: Path | None, show_cache_info: bool):
+@click.version_option(version="0.0.4", prog_name="pdf2md-ocr")
+def main(
+    input_pdf: Path,
+    output: Path | None,
+    start_page: int | None,
+    end_page: int | None,
+    show_cache_info: bool,
+):
     """Convert PDF to Markdown using Marker AI.
     
     First run downloads ~2-3GB of AI models (cached for future use).
     
+    Page numbering starts at 1. Examples:
+      pdf2md-ocr input.pdf                              # Convert all pages
+      pdf2md-ocr input.pdf --start-page 2 --end-page 3  # Pages 2 and 3 only
+      pdf2md-ocr input.pdf --start-page 5               # From page 5 to end
+      pdf2md-ocr input.pdf --end-page 10                # From beginning to page 10
+    
     Cache management:
       --show-cache-info    Show where models are cached and how much space they use
-    
-    Example:
-        pdf2md-ocr input.pdf -o output.md
-        pdf2md-ocr input.pdf --show-cache-info
     """
-    click.echo(f"Converting {input_pdf}...")
+    # Validate page range
+    try:
+        _validate_page_range(start_page, end_page)
+    except ValueError as e:
+        raise click.BadParameter(str(e))
+    
+    # Build page range string for Marker
+    page_range = _page_range_to_marker_format(start_page, end_page)
+    
+    # Display conversion info
+    pdf_name = input_pdf.name
+    if page_range:
+        click.echo(f"Converting {pdf_name} (pages {start_page or 1} to {end_page or 'end'})...")
+    else:
+        click.echo(f"Converting {pdf_name}...")
     
     # Load models (downloads ~2GB first time, then cached)
     models = create_model_dict()
     
-    # Create converter and convert PDF
-    converter = PdfConverter(artifact_dict=models)
+    # Create converter with optional page range
+    if page_range:
+        from marker.config.parser import ConfigParser
+        config_parser = ConfigParser({"page_range": page_range})
+        converter = PdfConverter(
+            artifact_dict=models,
+            config=config_parser.generate_config_dict(),
+        )
+    else:
+        converter = PdfConverter(artifact_dict=models)
+    
     rendered = converter(str(input_pdf))
     
     # Extract markdown text (returns tuple: text, extension, images)
