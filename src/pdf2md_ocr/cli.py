@@ -131,19 +131,22 @@ def main(
 
     First run downloads ~2-3GB of AI models (cached for future use).
 
+    \b
     Page numbering starts at 1. Examples:
-      pdf2md-ocr input.pdf                              # Convert all pages
-      pdf2md-ocr input.pdf --start-page 2 --end-page 3  # Pages 2 and 3 only
-      pdf2md-ocr input.pdf --start-page 5               # From page 5 to end
-      pdf2md-ocr input.pdf --end-page 10                # From beginning to page 10
+        pdf2md-ocr input.pdf  # Convert all pages
+        pdf2md-ocr input.pdf --start-page 2 --end-page 3  # Pages 2 and 3 only
+        pdf2md-ocr input.pdf --start-page 5  # From page 5 to end
+        pdf2md-ocr input.pdf --end-page 10  # From beginning to page 10
 
+    \b
     Output options:
-      --stdout             Write markdown to stdout for piping
-      --quiet              Suppress progress messages
+        --stdout  Write markdown to stdout for piping
+        --quiet   Suppress progress messages
 
+    \b
     Cache management:
-      --show-cache-info             Show cache location and size
-      pdf2md-ocr --show-cache-info  View cache without converting
+        --show-cache-info             Show cache location and size
+        pdf2md-ocr --show-cache-info  View cache without converting
     """
     # Handle standalone --show-cache-info (no PDF conversion)
     if show_cache_info and input_pdf is None:
