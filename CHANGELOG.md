@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.5] - 2025-12-13
+
+### Fixed
+
+- Fixed hanging issue when running `--help` or `--version` commands
+  - Lazy-load marker modules only when actually converting PDFs
+  - Commands like `uvx pdf2md-ocr --help` now run instantly instead of trying to load AI models
+
+[0.0.5]: https://github.com/carloscasalar/pdf2md-ocr/releases/tag/v0.0.5
+
 ## [0.0.4] - 2025-11-20
 
 ### Added

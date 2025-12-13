@@ -1,17 +1,9 @@
 """CLI for pdf2md-ocr."""
 
 import os
-
-# Suppress verbose logging from marker dependencies
-os.environ["GRPC_VERBOSITY"] = "ERROR"
-os.environ["GLOG_minloglevel"] = "2"
-
 from pathlib import Path
 import shutil
 import click
-from marker.converters.pdf import PdfConverter
-from marker.models import create_model_dict
-from marker.output import text_from_rendered
 
 
 def get_cache_dir() -> Path:
@@ -114,7 +106,7 @@ def _page_range_to_marker_format(start_page: int | None, end_page: int | None) -
     is_flag=True,
     help="Show cache location and size after conversion",
 )
-@click.version_option(version="0.0.4", prog_name="pdf2md-ocr")
+@click.version_option(version="0.0.5", prog_name="pdf2md-ocr")
 def main(
     input_pdf: Path,
     output: Path | None,
@@ -150,6 +142,15 @@ def main(
         click.echo(f"Converting {pdf_name} (pages {start_page or 1} to {end_page or 'end'})...")
     else:
         click.echo(f"Converting {pdf_name}...")
+    
+    # Suppress verbose logging from marker dependencies
+    os.environ["GRPC_VERBOSITY"] = "ERROR"
+    os.environ["GLOG_minloglevel"] = "2"
+    
+    # Import marker modules only when needed (not on --help/--version)
+    from marker.converters.pdf import PdfConverter
+    from marker.models import create_model_dict
+    from marker.output import text_from_rendered
     
     # Load models (downloads ~2GB first time, then cached)
     models = create_model_dict()
