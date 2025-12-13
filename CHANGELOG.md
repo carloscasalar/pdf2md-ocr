@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2025-12-13
+
+### Added
+
+- **Pipe-friendly output:** `--stdout` flag to write Markdown to stdout for piping to other tools
+  - Example: `pdf2md-ocr input.pdf --stdout | other-tool`
+- **Quiet mode:** `--quiet` / `-q` flag to suppress progress messages
+  - Useful in scripts and when piping output
+- **Standalone cache info:** `--show-cache-info` can now run without INPUT_PDF
+  - Check cache location and size: `pdf2md-ocr --show-cache-info`
+  - No longer requires converting a PDF to view cache information
+
+[1.0.0]: https://github.com/carloscasalar/pdf2md-ocr/releases/tag/v1.0.0
+
 ## [0.0.5] - 2025-12-13
 
 ### Fixed

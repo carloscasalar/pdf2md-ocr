@@ -1093,7 +1093,7 @@ wheels = [
 
 [[package]]
 name = "pdf2md-ocr"
-version = "0.0.5"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "click" },

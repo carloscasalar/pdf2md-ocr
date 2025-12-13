@@ -12,27 +12,27 @@ from pdf2md_ocr.cli import main, _validate_page_range, _page_range_to_marker_for
 def test_convert_only_text_pdf():
     """Test conversion of pdf-samples/only-text.pdf produces expected markdown content."""
     runner = CliRunner()
-    
+
     # Use the sample PDF from the project
     project_root = Path(__file__).parent.parent
     input_pdf = project_root / "pdf-samples" / "only-text.pdf"
-    
+
     # Verify the input file exists
     assert input_pdf.exists(), f"Test PDF not found at {input_pdf}"
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         output_md = Path(tmpdir) / "output.md"
-        
+
         # Run the CLI command
         result = runner.invoke(main, [str(input_pdf), "-o", str(output_md)])
-        
+
         # Check the command succeeded
         assert result.exit_code == 0, f"CLI failed with: {result.output}"
         assert output_md.exists(), "Output markdown file was not created"
-        
+
         # Read the generated markdown
         content = output_md.read_text(encoding="utf-8")
-        
+
         # Verify expected content is present
         # Based on the actual output from out/only-text.md
         expected_texts = [
@@ -41,13 +41,13 @@ def test_convert_only_text_pdf():
             "Some subtitle",
             "Paragraph in the subtitle"
         ]
-        
+
         for expected_text in expected_texts:
             assert expected_text in content, (
                 f"Expected text '{expected_text}' not found in output.\n"
                 f"Generated content:\n{content}"
             )
-        
+
         # Verify it's a non-trivial conversion (at least some reasonable length)
         assert len(content) > 50, f"Output too short ({len(content)} chars): {content}"
 
@@ -55,24 +55,24 @@ def test_convert_only_text_pdf():
 def test_convert_only_text_pdf_default_output():
     """Test conversion with default output filename (input name with .md extension)."""
     runner = CliRunner()
-    
+
     project_root = Path(__file__).parent.parent
     input_pdf = project_root / "pdf-samples" / "only-text.pdf"
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         # Copy PDF to temp dir to test default output location
         temp_pdf = Path(tmpdir) / "test.pdf"
         temp_pdf.write_bytes(input_pdf.read_bytes())
-        
+
         # Run without -o flag (should create test.md in same directory)
         result = runner.invoke(main, [str(temp_pdf)])
-        
+
         assert result.exit_code == 0
-        
+
         # Check default output file was created
         expected_output = Path(tmpdir) / "test.md"
         assert expected_output.exists(), "Default output file was not created"
-        
+
         content = expected_output.read_text(encoding="utf-8")
         assert "Document Title" in content
 
@@ -80,16 +80,16 @@ def test_convert_only_text_pdf_default_output():
 def test_convert_three_page_pdf_with_page_range():
     """Test conversion of three-page.pdf with page range (pages 2-3) restricts output correctly."""
     runner = CliRunner()
-    
+
     project_root = Path(__file__).parent.parent
     input_pdf = project_root / "pdf-samples" / "three-page.pdf"
-    
+
     # Verify the input file exists
     assert input_pdf.exists(), f"Test PDF not found at {input_pdf}"
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         output_md = Path(tmpdir) / "output.md"
-        
+
         # Run the CLI command with page range 2-3 (1-based page numbering)
         result = runner.invoke(main, [
             str(input_pdf),
@@ -97,21 +97,21 @@ def test_convert_three_page_pdf_with_page_range():
             "--start-page", "2",
             "--end-page", "3"
         ])
-        
+
         # Check the command succeeded
         assert result.exit_code == 0, f"CLI failed with: {result.output}"
         assert output_md.exists(), "Output markdown file was not created"
-        
+
         # Read the generated markdown
         content = output_md.read_text(encoding="utf-8")
-        
+
         # Verify page 1 content is NOT present
         # The markdown should NOT contain "**Page 1**" or its specific content
         assert "**Page 1**" not in content, (
             "Page 1 content should not be present when limiting to pages 2-3.\n"
             f"Generated content:\n{content}"
         )
-        
+
         # Verify pages 2 and 3 content IS present
         assert "**Page 2**" in content, (
             "Page 2 content should be present when limiting to pages 2-3.\n"
@@ -121,7 +121,7 @@ def test_convert_three_page_pdf_with_page_range():
             "Page 3 content should be present when limiting to pages 2-3.\n"
             f"Generated content:\n{content}"
         )
-        
+
         # Verify it's a non-trivial conversion
         assert len(content) > 50, f"Output too short ({len(content)} chars): {content}"
 
@@ -273,3 +273,94 @@ class TestPageRangeCliValidation:
 
         assert result.exit_code == 2
         assert "cannot be greater than" in result.output
+
+
+class TestStdoutAndQuietOptions:
+    """Test --stdout and --quiet CLI options."""
+
+    def test_stdout_writes_to_stdout(self):
+        """Test that --stdout writes markdown to stdout instead of file."""
+        runner = CliRunner()
+        project_root = Path(__file__).parent.parent
+        input_pdf = project_root / "pdf-samples" / "only-text.pdf"
+
+        result = runner.invoke(main, [str(input_pdf), "--stdout"])
+
+        assert result.exit_code == 0
+        # Markdown content should be in stdout
+        assert "Document Title" in result.output
+        assert len(result.output) > 100  # Should have substantial content
+
+    def test_stdout_with_quiet_suppresses_progress(self):
+        """Test that --stdout --quiet only outputs markdown."""
+        runner = CliRunner()
+        project_root = Path(__file__).parent.parent
+        input_pdf = project_root / "pdf-samples" / "only-text.pdf"
+
+        result = runner.invoke(main, [str(input_pdf), "--stdout", "--quiet"])
+
+        assert result.exit_code == 0
+        # Should NOT have progress messages
+        assert "Converting" not in result.output
+        assert "✓" not in result.output
+        # Should have markdown content
+        assert "Document Title" in result.output
+
+    def test_quiet_suppresses_file_output_messages(self):
+        """Test that --quiet suppresses progress when writing to file."""
+        runner = CliRunner()
+        project_root = Path(__file__).parent.parent
+        input_pdf = project_root / "pdf-samples" / "only-text.pdf"
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_md = Path(tmpdir) / "output.md"
+            result = runner.invoke(main, [str(input_pdf), "-o", str(output_md), "--quiet"])
+
+            assert result.exit_code == 0
+            assert output_md.exists()
+            # Should NOT have progress messages in output
+            assert "Converting" not in result.output
+            assert "✓ Converted" not in result.output
+
+    def test_stdout_ignores_output_flag(self):
+        """Test that --stdout ignores --output flag."""
+        runner = CliRunner()
+        project_root = Path(__file__).parent.parent
+        input_pdf = project_root / "pdf-samples" / "only-text.pdf"
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_md = Path(tmpdir) / "output.md"
+            result = runner.invoke(main, [
+                str(input_pdf),
+                "--stdout",
+                "-o", str(output_md)
+            ])
+
+            assert result.exit_code == 0
+            # File should NOT be created when using --stdout
+            assert not output_md.exists()
+            # Content should be in stdout
+            assert "Document Title" in result.output
+
+
+class TestStandaloneCacheInfo:
+    """Test --show-cache-info without INPUT_PDF."""
+
+    def test_show_cache_info_standalone(self):
+        """Test that --show-cache-info works without INPUT_PDF."""
+        runner = CliRunner()
+        result = runner.invoke(main, ["--show-cache-info"])
+
+        assert result.exit_code == 0
+        # Should show cache location
+        assert "Cache location:" in result.output
+        # Should show either cache size or "empty" message
+        assert "Cache size:" in result.output or "Cache is empty" in result.output
+
+    def test_no_input_pdf_without_show_cache_info_fails(self):
+        """Test that running without INPUT_PDF and without --show-cache-info fails."""
+        runner = CliRunner()
+        result = runner.invoke(main, [])
+
+        assert result.exit_code == 2
+        assert "INPUT_PDF is required" in result.output

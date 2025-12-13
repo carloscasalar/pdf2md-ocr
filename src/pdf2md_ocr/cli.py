@@ -82,12 +82,23 @@ def _page_range_to_marker_format(start_page: int | None, end_page: int | None) -
 
 
 @click.command()
-@click.argument("input_pdf", type=click.Path(exists=True, path_type=Path))
+@click.argument("input_pdf", type=click.Path(exists=True, path_type=Path), required=False)
 @click.option(
     "--output",
     "-o",
     type=click.Path(path_type=Path),
     help="Output markdown file (default: same name as input with .md extension)",
+)
+@click.option(
+    "--stdout",
+    is_flag=True,
+    help="Write markdown to stdout instead of a file (ignores --output)",
+)
+@click.option(
+    "--quiet",
+    "-q",
+    is_flag=True,
+    help="Suppress progress messages (stderr only)",
 )
 @click.option(
     "--start-page",
@@ -106,10 +117,12 @@ def _page_range_to_marker_format(start_page: int | None, end_page: int | None) -
     is_flag=True,
     help="Show cache location and size after conversion",
 )
-@click.version_option(version="0.0.5", prog_name="pdf2md-ocr")
+@click.version_option(version="1.0.0", prog_name="pdf2md-ocr")
 def main(
-    input_pdf: Path,
+    input_pdf: Path | None,
     output: Path | None,
+    stdout: bool,
+    quiet: bool,
     start_page: int | None,
     end_page: int | None,
     show_cache_info: bool,
@@ -124,9 +137,31 @@ def main(
       pdf2md-ocr input.pdf --start-page 5               # From page 5 to end
       pdf2md-ocr input.pdf --end-page 10                # From beginning to page 10
 
+    Output options:
+      --stdout             Write markdown to stdout for piping
+      --quiet              Suppress progress messages
+
     Cache management:
-      --show-cache-info    Show where models are cached and how much space they use
+      --show-cache-info             Show cache location and size
+      pdf2md-ocr --show-cache-info  View cache without converting
     """
+    # Handle standalone --show-cache-info (no PDF conversion)
+    if show_cache_info and input_pdf is None:
+        cache_dir = get_cache_dir()
+        if cache_dir.exists():
+            size = get_cache_size(cache_dir)
+            click.echo(f"Cache location: {cache_dir}")
+            click.echo(f"Cache size: {format_size(size)}")
+            click.echo(f"To clear cache: rm -rf '{cache_dir}'")
+        else:
+            click.echo(f"Cache location: {cache_dir}")
+            click.echo("Cache is empty")
+        return
+
+    # INPUT_PDF is required for conversion
+    if input_pdf is None:
+        raise click.UsageError("INPUT_PDF is required unless using --show-cache-info")
+
     # Validate page range
     try:
         _validate_page_range(start_page, end_page)
@@ -136,12 +171,11 @@ def main(
     # Build page range string for Marker
     page_range = _page_range_to_marker_format(start_page, end_page)
 
-    # Display conversion info
+    # Display conversion info (to stderr if --stdout, unless --quiet)
     pdf_name = input_pdf.name
-    if page_range:
-        click.echo(f"Converting {pdf_name} (pages {start_page or 1} to {end_page or 'end'})...")
-    else:
-        click.echo(f"Converting {pdf_name}...")
+    if not quiet:
+        msg = f"Converting {pdf_name} (pages {start_page or 1} to {end_page or 'end'})..." if page_range else f"Converting {pdf_name}..."
+        click.echo(msg, err=stdout)
 
     # Suppress verbose logging from marker dependencies
     os.environ["GRPC_VERBOSITY"] = "ERROR"
@@ -171,23 +205,29 @@ def main(
     # Extract markdown text (returns tuple: text, extension, images)
     markdown_text, _, _ = text_from_rendered(rendered)
 
-    # Save output
-    output_path = output or input_pdf.with_suffix(".md")
-    output_path.write_text(markdown_text, encoding="utf-8")
+    # Output handling
+    if stdout:
+        # Write to stdout for piping
+        click.echo(markdown_text)
+    else:
+        # Save to file
+        output_path = output or input_pdf.with_suffix(".md")
+        output_path.write_text(markdown_text, encoding="utf-8")
 
-    click.echo(f"✓ Converted to {output_path}")
+        if not quiet:
+            click.echo(f"✓ Converted to {output_path}", err=False)
 
     # Show cache info if requested
     if show_cache_info:
         cache_dir = get_cache_dir()
         if cache_dir.exists():
             size = get_cache_size(cache_dir)
-            click.echo(f"\nCache location: {cache_dir}")
-            click.echo(f"Cache size: {format_size(size)}")
-            click.echo(f"To clear cache: rm -rf '{cache_dir}'")
+            click.echo(f"\nCache location: {cache_dir}", err=stdout)
+            click.echo(f"Cache size: {format_size(size)}", err=stdout)
+            click.echo(f"To clear cache: rm -rf '{cache_dir}'", err=stdout)
         else:
-            click.echo(f"\nCache location: {cache_dir}")
-            click.echo("Cache is empty")
+            click.echo(f"\nCache location: {cache_dir}", err=stdout)
+            click.echo("Cache is empty", err=stdout)
 
 
 if __name__ == "__main__":
