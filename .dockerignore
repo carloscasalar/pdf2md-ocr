@@ -1,0 +1,6 @@
+# Ignore everything by default; image builds copy nothing
+*
+
+# Keep build definitions
+!.dockerignore
+!Dockerfile
