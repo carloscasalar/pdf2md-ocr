@@ -24,6 +24,9 @@ jobs:
           python-version: 3.13
           cache-dependency-glob: "uv.lock"
 
+      - name: Create virtual environment
+        run: uv venv
+
       - name: Build package
         run: uv run --with build python -m build
 
