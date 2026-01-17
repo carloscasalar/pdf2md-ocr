@@ -117,7 +117,7 @@ def _page_range_to_marker_format(start_page: int | None, end_page: int | None) -
     is_flag=True,
     help="Show cache location and size after conversion",
 )
-@click.version_option(version="1.0.0", prog_name="pdf2md-ocr")
+@click.version_option(version="1.0.1", prog_name="pdf2md-ocr")
 def main(
     input_pdf: Path | None,
     output: Path | None,
@@ -189,21 +189,43 @@ def main(
     from marker.models import create_model_dict
     from marker.output import text_from_rendered
 
-    # Load models (downloads ~2GB first time, then cached)
-    models = create_model_dict()
+    try:
+        # Load models (downloads ~2GB first time, then cached)
+        models = create_model_dict()
 
-    # Create converter with optional page range
-    if page_range:
-        from marker.config.parser import ConfigParser
-        config_parser = ConfigParser({"page_range": page_range})
-        converter = PdfConverter(
-            artifact_dict=models,
-            config=config_parser.generate_config_dict(),
-        )
-    else:
-        converter = PdfConverter(artifact_dict=models)
+        # Create converter with optional page range
+        if page_range:
+            from marker.config.parser import ConfigParser
+            config_parser = ConfigParser({"page_range": page_range})
+            converter = PdfConverter(
+                artifact_dict=models,
+                config=config_parser.generate_config_dict(),
+            )
+        else:
+            converter = PdfConverter(artifact_dict=models)
 
-    rendered = converter(str(input_pdf))
+        rendered = converter(str(input_pdf))
+    except (OSError, RuntimeError) as e:
+        error_msg = str(e)
+        if ("libgobject" in error_msg or "weasyprint" in error_msg.lower()
+            or "failed to convert" in error_msg.lower()):
+            raise click.ClickException(
+                f"System libraries required for PDF conversion are missing or not properly configured.\n\n"
+                f"pdf2md-ocr requires WeasyPrint, which depends on system libraries.\n"
+                f"Please install them for your operating system:\n\n"
+                f"macOS (with Homebrew):\n"
+                f"  brew install gobject-introspection pango\n"
+                f"  export DYLD_LIBRARY_PATH=\"/opt/homebrew/lib:$DYLD_LIBRARY_PATH\"\n\n"
+                f"Ubuntu/Debian:\n"
+                f"  sudo apt-get install libgobject-2.0-0 libpango-1.0-0\n\n"
+                f"Fedora/RHEL:\n"
+                f"  sudo dnf install gobject-introspection pango\n\n"
+                f"Windows:\n"
+                f"  Download and install GTK+ 3 from https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer\n\n"
+                f"For more details, see the System Requirements section in the README:\n"
+                f"  https://github.com/carloscasalar/pdf2md-ocr#system-requirements"
+            )
+        raise
 
     # Extract markdown text (returns tuple: text, extension, images)
     markdown_text, _, _ = text_from_rendered(rendered)

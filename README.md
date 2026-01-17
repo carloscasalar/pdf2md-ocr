@@ -83,6 +83,40 @@ Subsequent runs will be much faster since the models are already cached.
 - Python 3.10 or higher
 - ~2GB disk space for AI models (one-time download)
 
+## System Requirements
+
+pdf2md-ocr requires native system libraries for PDF processing. These need to be installed separately on your system:
+
+### macOS (Homebrew)
+
+```bash
+brew install gobject-introspection pango
+export DYLD_LIBRARY_PATH="/opt/homebrew/lib:$DYLD_LIBRARY_PATH"
+```
+
+For permanent setup, add the export line to your shell profile (`~/.zshrc`, `~/.bash_profile`, etc.):
+
+```bash
+echo 'export DYLD_LIBRARY_PATH="/opt/homebrew/lib:$DYLD_LIBRARY_PATH"' >> ~/.zshrc
+```
+
+### Linux (Ubuntu/Debian)
+
+```bash
+sudo apt-get update
+sudo apt-get install libgobject-2.0-0 libpango-1.0-0
+```
+
+### Linux (Fedora/RHEL)
+
+```bash
+sudo dnf install gobject-introspection pango
+```
+
+### Windows
+
+Download and install GTK+ 3 from the [GTK-for-Windows-Runtime-Environment-Installer](https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer).
+
 ## Development
 
 For development, a Makefile is provided with common tasks:

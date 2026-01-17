@@ -1,6 +1,6 @@
 [project]
 name = "pdf2md-ocr"
-version = "1.0.0"
+version = "1.0.1"
 description = "Simple CLI tool to convert PDFs to Markdown using Marker AI"
 readme = "README.md"
 requires-python = ">=3.10"

@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-01-17
+
+### Fixed
+
+- **Improved system library error handling:** Better error messages when required system libraries (WeasyPrint dependencies) are missing
+  - CLI now detects missing `libgobject-2.0`, `pango`, and other native dependencies
+  - Provides clear, platform-specific installation instructions (macOS, Linux, Windows)
+  - Links to System Requirements section in README for more details
+
+### Added
+
+- **System Requirements documentation:** New section in README explaining native library dependencies
+  - Detailed installation steps for macOS (Homebrew), Ubuntu/Debian, Fedora/RHEL, and Windows
+  - Guidance for environment variable setup on macOS (`DYLD_LIBRARY_PATH`)
+
+[1.0.1]: https://github.com/carloscasalar/pdf2md-ocr/releases/tag/v1.0.1
+
 ## [1.0.0] - 2025-12-13
 
 ### Added
