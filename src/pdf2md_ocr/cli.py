@@ -207,8 +207,10 @@ def main(
         rendered = converter(str(input_pdf))
     except (OSError, RuntimeError) as e:
         error_msg = str(e)
-        if ("libgobject" in error_msg or "weasyprint" in error_msg.lower()
-            or "failed to convert" in error_msg.lower()):
+        error_msg_lower = error_msg.lower()
+        if ("libgobject" in error_msg_lower
+            or "weasyprint" in error_msg_lower
+            or "failed to convert" in error_msg_lower):
             raise click.ClickException(
                 f"System libraries required for PDF conversion are missing or not properly configured.\n\n"
                 f"pdf2md-ocr requires WeasyPrint, which depends on system libraries.\n"
