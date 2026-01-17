@@ -28,7 +28,7 @@ jobs:
         id: version
         run: |
           # Get the tag that triggered the original workflow
-          REF=${{ github.event.workflow_run.head_commit }}
+          REF=${{ github.event.workflow_run.head_sha }}
           # Query the latest tag for this commit
           TAG=$(git describe --exact-match --tags $REF 2>/dev/null || echo "")
           if [ -z "$TAG" ]; then
