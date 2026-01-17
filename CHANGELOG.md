@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **System Requirements documentation:** New section in README explaining native library dependencies
   - Detailed installation steps for macOS (Homebrew), Ubuntu/Debian, Fedora/RHEL, and Windows
   - Guidance for environment variable setup on macOS (`DYLD_LIBRARY_PATH`)
+- **Docker support:** Added `Dockerfile` and `.dockerignore` for containerized usage and distribution
+- **CI: Docker image workflow:** New `build-docker-image.yml` GitHub Actions workflow to build and publish Docker images
+- **CI: Updated Python setup action:** Updated GitHub Actions workflows to use `actions/setup-python@v5`
 
 [1.0.1]: https://github.com/carloscasalar/pdf2md-ocr/releases/tag/v1.0.1
 
