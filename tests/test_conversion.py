@@ -195,23 +195,28 @@ class TestPageRangeFormatConversion:
         assert _page_range_to_marker_format(1, 3) == "0-2"
 
     def test_only_start_specified(self):
-        """Test conversion when only start_page is specified."""
-        # Pages 3 to end (1-based) -> "2-" (0-based for Marker)
-        assert _page_range_to_marker_format(3, None) == "2-"
-        assert _page_range_to_marker_format(1, None) == "0-"
-        assert _page_range_to_marker_format(10, None) == "9-"
+        """Test conversion when only start_page is specified (requires total_pages)."""
+        # Pages 3 to end of 10-page doc (1-based) -> "2-9" (0-based for Marker)
+        assert _page_range_to_marker_format(3, None, total_pages=10) == "2-9"
+        assert _page_range_to_marker_format(1, None, total_pages=5) == "0-4"
+        assert _page_range_to_marker_format(10, None, total_pages=15) == "9-14"
 
     def test_only_end_specified(self):
         """Test conversion when only end_page is specified."""
-        # Pages 1 to 5 (1-based) -> "-4" (0-based for Marker)
-        assert _page_range_to_marker_format(None, 5) == "-4"
-        assert _page_range_to_marker_format(None, 1) == "-0"
-        assert _page_range_to_marker_format(None, 10) == "-9"
+        # Pages 1 to 5 (1-based) -> "0-4" (0-based for Marker)
+        assert _page_range_to_marker_format(None, 5) == "0-4"
+        assert _page_range_to_marker_format(None, 1) == "0-0"
+        assert _page_range_to_marker_format(None, 10) == "0-9"
 
     def test_neither_specified(self):
         """Test conversion when neither is specified."""
         # All pages -> None
         assert _page_range_to_marker_format(None, None) is None
+
+    def test_only_start_specified_missing_total_pages(self):
+        """Test that start_page without end_page requires total_pages."""
+        with pytest.raises(ValueError, match="total_pages is required"):
+            _page_range_to_marker_format(5, None)
 
 
 class TestPageRangeCliValidation:

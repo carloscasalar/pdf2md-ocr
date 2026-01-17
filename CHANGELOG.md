@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Page range handling for start-page without end-page:** Fixed issue where `--start-page` without `--end-page` would fail
+  - Now automatically detects total PDF page count using `pypdf`
+  - Properly converts user-friendly 1-based page numbers to Marker's 0-based format
+  - Example: `pdf2md-ocr input.pdf --start-page 223` now correctly processes from page 223 to the end
 - **Improved system library error handling:** Better error messages when required system libraries (WeasyPrint dependencies) are missing
   - CLI now detects missing `libgobject-2.0`, `pango`, and other native dependencies
   - Provides clear, platform-specific installation instructions (macOS, Linux, Windows)

@@ -51,7 +51,7 @@ def _validate_page_range(start_page: int | None, end_page: int | None) -> None:
         raise ValueError(f"--start-page ({start_page}) cannot be greater than --end-page ({end_page})")
 
 
-def _page_range_to_marker_format(start_page: int | None, end_page: int | None) -> str | None:
+def _page_range_to_marker_format(start_page: int | None, end_page: int | None, total_pages: int | None = None) -> str | None:
     """Convert 1-based page range to Marker's page_range format (0-based).
 
     Marker uses 0-based page numbering in its page_range parameter.
@@ -59,6 +59,7 @@ def _page_range_to_marker_format(start_page: int | None, end_page: int | None) -
     Args:
         start_page: Starting page (1-based), inclusive.
         end_page: Ending page (1-based), inclusive.
+        total_pages: Total number of pages in the document (required if start_page is specified without end_page).
 
     Returns:
         Page range string for Marker (e.g., "1-4" for pages 2-5 in 1-based), or None if no range.
@@ -72,10 +73,13 @@ def _page_range_to_marker_format(start_page: int | None, end_page: int | None) -
 
     if marker_start is None and marker_end is not None:
         # Only end specified: from beginning to end
-        return "-" + str(marker_end)
+        return f"0-{marker_end}"
     elif marker_start is not None and marker_end is None:
         # Only start specified: from start to end of document
-        return str(marker_start) + "-"
+        if total_pages is None:
+            raise ValueError("total_pages is required when start_page is specified without end_page")
+        marker_end = total_pages - 1
+        return f"{marker_start}-{marker_end}"
     else:
         # Both specified
         return f"{marker_start}-{marker_end}"
@@ -171,8 +175,25 @@ def main(
     except ValueError as e:
         raise click.BadParameter(str(e))
 
+    # Get total page count if needed for page range conversion
+    total_pages = None
+    if start_page is not None and end_page is None:
+        # Need to get total pages to convert start-only range
+        try:
+            from pypdf import PdfReader
+            pdf_reader = PdfReader(str(input_pdf))
+            total_pages = len(pdf_reader.pages)
+        except Exception as e:
+            raise click.ClickException(
+                f"Failed to read PDF page count: {e}\n"
+                f"Please specify both --start-page and --end-page, or omit --start-page to process from page 1."
+            )
+
     # Build page range string for Marker
-    page_range = _page_range_to_marker_format(start_page, end_page)
+    try:
+        page_range = _page_range_to_marker_format(start_page, end_page, total_pages)
+    except ValueError as e:
+        raise click.BadParameter(str(e))
 
     # Display conversion info (to stderr if --stdout, unless --quiet)
     pdf_name = input_pdf.name
