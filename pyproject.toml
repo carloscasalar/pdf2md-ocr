@@ -21,7 +21,7 @@ classifiers = [
     "Topic :: Text Processing :: Markup :: Markdown",
 ]
 
-dependencies = ["marker-pdf==1.10.1", "click", "rich", "pypdf"]
+dependencies = ["marker-pdf==1.10.1", "click", "rich", "pypdf==6.6.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0.0"]
