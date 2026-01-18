@@ -5,6 +5,7 @@ from pathlib import Path
 import tempfile
 import pytest
 from click.testing import CliRunner
+from pypdf import PdfReader
 
 from pdf2md_ocr.cli import main, _validate_page_range, _page_range_to_marker_format
 
@@ -369,3 +370,176 @@ class TestStandaloneCacheInfo:
 
         assert result.exit_code == 2
         assert "INPUT_PDF is required" in result.output
+
+
+class TestStartPageWithoutEndPage:
+    """Test --start-page without --end-page functionality."""
+
+    def test_pypdf_reads_page_count_correctly(self):
+        """Test that pypdf can read the page count from a multi-page PDF."""
+        project_root = Path(__file__).parent.parent
+        input_pdf = project_root / "pdf-samples" / "three-page.pdf"
+        
+        # Verify the input file exists
+        assert input_pdf.exists(), f"Test PDF not found at {input_pdf}"
+        
+        # Read page count with pypdf
+        pdf_reader = PdfReader(str(input_pdf))
+        total_pages = len(pdf_reader.pages)
+        
+        # Verify the three-page.pdf has 3 pages
+        assert total_pages == 3, f"Expected 3 pages, got {total_pages}"
+
+    def test_page_range_conversion_with_start_only(self):
+        """Test that _page_range_to_marker_format correctly converts start-page-only range."""
+        # Test with start_page=2 on a 3-page document
+        # Should convert to "1-2" (0-based, from page 2 to page 3)
+        result = _page_range_to_marker_format(2, None, total_pages=3)
+        assert result == "1-2", f"Expected '1-2', got '{result}'"
+        
+        # Test with start_page=1 on a 5-page document
+        # Should convert to "0-4" (0-based, from page 1 to page 5)
+        result = _page_range_to_marker_format(1, None, total_pages=5)
+        assert result == "0-4", f"Expected '0-4', got '{result}'"
+
+    def test_start_page_without_end_page_invalid_pdf(self):
+        """Test error handling when pypdf cannot read the PDF page count."""
+        runner = CliRunner()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create a fake PDF file that's not actually a valid PDF
+            fake_pdf = Path(tmpdir) / "invalid.pdf"
+            fake_pdf.write_text("This is not a PDF file")
+
+            output_md = Path(tmpdir) / "output.md"
+
+            # Run the CLI command with only --start-page
+            result = runner.invoke(main, [
+                str(fake_pdf),
+                "-o", str(output_md),
+                "--start-page", "2"
+            ])
+
+            # Should fail with appropriate error message
+            assert result.exit_code != 0, "Should fail when PDF cannot be read"
+            assert "Failed to read PDF page count" in result.output, (
+                f"Expected error message about reading PDF, got: {result.output}"
+            )
+            assert "Please specify both --start-page and --end-page" in result.output, (
+                f"Expected helpful message about specifying both pages, got: {result.output}"
+            )
+
+    def test_start_page_without_end_page_nonexistent_file(self):
+        """Test error handling when the PDF file doesn't exist."""
+        runner = CliRunner()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Reference a file that doesn't exist
+            nonexistent_pdf = Path(tmpdir) / "nonexistent.pdf"
+            output_md = Path(tmpdir) / "output.md"
+
+            # Run the CLI command with only --start-page
+            result = runner.invoke(main, [
+                str(nonexistent_pdf),
+                "-o", str(output_md),
+                "--start-page", "2"
+            ])
+
+            # Should fail with appropriate error message
+            # Click validates file existence before we try to read it with pypdf
+            assert result.exit_code != 0, "Should fail when PDF file doesn't exist"
+            assert "does not exist" in result.output, (
+                f"Expected error message about file not existing, got: {result.output}"
+            )
+
+    @pytest.mark.slow
+    def test_start_page_without_end_page_processes_to_end(self):
+        """Test that specifying only --start-page processes from that page to the end of the document.
+        
+        This is an integration test that requires network access to download ML models.
+        """
+        runner = CliRunner()
+        project_root = Path(__file__).parent.parent
+        input_pdf = project_root / "pdf-samples" / "three-page.pdf"
+
+        # Verify the input file exists
+        assert input_pdf.exists(), f"Test PDF not found at {input_pdf}"
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_md = Path(tmpdir) / "output.md"
+
+            # Run the CLI command with only --start-page=2 (should process pages 2-3)
+            result = runner.invoke(main, [
+                str(input_pdf),
+                "-o", str(output_md),
+                "--start-page", "2"
+            ])
+
+            # Check the command succeeded
+            assert result.exit_code == 0, f"CLI failed with: {result.output}"
+            assert output_md.exists(), "Output markdown file was not created"
+
+            # Read the generated markdown
+            content = output_md.read_text(encoding="utf-8")
+
+            # Verify page 1 content is NOT present
+            assert "**Page 1**" not in content, (
+                "Page 1 content should not be present when starting from page 2.\n"
+                f"Generated content:\n{content}"
+            )
+
+            # Verify pages 2 and 3 content IS present
+            assert "**Page 2**" in content, (
+                "Page 2 content should be present when starting from page 2.\n"
+                f"Generated content:\n{content}"
+            )
+            assert "**Page 3**" in content, (
+                "Page 3 content should be present when starting from page 2.\n"
+                f"Generated content:\n{content}"
+            )
+
+            # Verify it's a non-trivial conversion
+            assert len(content) > 50, f"Output too short ({len(content)} chars): {content}"
+
+    @pytest.mark.slow
+    def test_start_page_without_end_page_single_page(self):
+        """Test that specifying --start-page on the last page works correctly.
+        
+        This is an integration test that requires network access to download ML models.
+        """
+        runner = CliRunner()
+        project_root = Path(__file__).parent.parent
+        input_pdf = project_root / "pdf-samples" / "three-page.pdf"
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_md = Path(tmpdir) / "output.md"
+
+            # Run the CLI command with only --start-page=3 (should process only page 3)
+            result = runner.invoke(main, [
+                str(input_pdf),
+                "-o", str(output_md),
+                "--start-page", "3"
+            ])
+
+            # Check the command succeeded
+            assert result.exit_code == 0, f"CLI failed with: {result.output}"
+            assert output_md.exists(), "Output markdown file was not created"
+
+            # Read the generated markdown
+            content = output_md.read_text(encoding="utf-8")
+
+            # Verify pages 1 and 2 content are NOT present
+            assert "**Page 1**" not in content, (
+                "Page 1 content should not be present when starting from page 3.\n"
+                f"Generated content:\n{content}"
+            )
+            assert "**Page 2**" not in content, (
+                "Page 2 content should not be present when starting from page 3.\n"
+                f"Generated content:\n{content}"
+            )
+
+            # Verify page 3 content IS present
+            assert "**Page 3**" in content, (
+                "Page 3 content should be present when starting from page 3.\n"
+                f"Generated content:\n{content}"
+            )
