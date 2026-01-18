@@ -5,8 +5,12 @@ on:
     workflows: ["Publish to PyPI"]
     types:
       - completed
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Version tag to build (e.g., 1.2.3). If empty, will try to detect from current ref.'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -15,30 +19,47 @@ permissions:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    # Only run if the PyPI workflow succeeded
-    if: github.event.workflow_run.conclusion == 'success'
+    # Run if manually triggered OR if the PyPI workflow succeeded
+    if: |
+      github.event_name == 'workflow_dispatch' || 
+      github.event.workflow_run.conclusion == 'success'
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          # Use head_sha for automated runs, default (current ref) for manual runs
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
 
       - name: Extract version from tag
         id: version
         run: |
-          # Get the tag that triggered the original workflow
-          REF=${{ github.event.workflow_run.head_sha }}
-          # Query the latest tag for this commit
-          TAG=$(git describe --exact-match --tags $REF 2>/dev/null || echo "")
-          if [ -z "$TAG" ]; then
-            echo "No tag found for this commit, skipping Docker build"
-            echo "version=" >> $GITHUB_OUTPUT
+          VERSION=""
+          
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            # Priority 1: User input
+            VERSION="${{ github.event.inputs.version_tag }}"
+            
+            # Priority 2: Detect from current ref if input is empty
+            if [ -z "$VERSION" ]; then
+              TAG=$(git describe --exact-match --tags HEAD 2>/dev/null || echo "")
+              VERSION=${TAG#v}
+            fi
           else
-            # Remove 'v' prefix if present
-            VERSION=${TAG#v}
+            # Automated run: get tag from upstream workflow
+            TAG=${{ github.event.workflow_run.head_branch }}
+            if [[ $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              VERSION=${TAG#v}
+            fi
+          fi
+
+          if [ -n "$VERSION" ]; then
             echo "version=$VERSION" >> $GITHUB_OUTPUT
-            echo "tag=$TAG" >> $GITHUB_OUTPUT
+            echo "Found version: $VERSION"
+          else
+            echo "No valid version found, skipping Docker build"
+            echo "version=" >> $GITHUB_OUTPUT
           fi
 
       - name: Set up QEMU
@@ -70,10 +91,9 @@ jobs:
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.version=${{ steps.version.outputs.version }}
-            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.revision=${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Image build skipped
         if: steps.version.outputs.version == ''
         run: |
           echo "No version tag found - Docker image build skipped"
-          echo "Docker image is only built and pushed when a release tag is created"
