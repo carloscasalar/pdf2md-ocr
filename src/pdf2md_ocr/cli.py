@@ -181,9 +181,10 @@ def main(
         # Need to get total pages to convert start-only range
         try:
             from pypdf import PdfReader
+            from pypdf.errors import PdfReadError
             pdf_reader = PdfReader(str(input_pdf))
             total_pages = len(pdf_reader.pages)
-        except Exception as e:
+        except (FileNotFoundError, OSError, PdfReadError) as e:
             raise click.ClickException(
                 f"Failed to read PDF page count: {e}\n"
                 f"Please specify both --start-page and --end-page, or omit --start-page to process from page 1."
