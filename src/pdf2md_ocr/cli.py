@@ -51,7 +51,7 @@ def _validate_page_range(start_page: int | None, end_page: int | None) -> None:
         raise ValueError(f"--start-page ({start_page}) cannot be greater than --end-page ({end_page})")
 
 
-def _page_range_to_marker_format(start_page: int | None, end_page: int | None) -> str | None:
+def _page_range_to_marker_format(start_page: int | None, end_page: int | None, total_pages: int | None = None) -> str | None:
     """Convert 1-based page range to Marker's page_range format (0-based).
 
     Marker uses 0-based page numbering in its page_range parameter.
@@ -59,6 +59,7 @@ def _page_range_to_marker_format(start_page: int | None, end_page: int | None) -
     Args:
         start_page: Starting page (1-based), inclusive.
         end_page: Ending page (1-based), inclusive.
+        total_pages: Total number of pages in the document (required if start_page is specified without end_page).
 
     Returns:
         Page range string for Marker (e.g., "1-4" for pages 2-5 in 1-based), or None if no range.
@@ -72,10 +73,13 @@ def _page_range_to_marker_format(start_page: int | None, end_page: int | None) -
 
     if marker_start is None and marker_end is not None:
         # Only end specified: from beginning to end
-        return "-" + str(marker_end)
+        return f"0-{marker_end}"
     elif marker_start is not None and marker_end is None:
         # Only start specified: from start to end of document
-        return str(marker_start) + "-"
+        if total_pages is None:
+            raise ValueError("total_pages is required when start_page is specified without end_page")
+        marker_end = total_pages - 1
+        return f"{marker_start}-{marker_end}"
     else:
         # Both specified
         return f"{marker_start}-{marker_end}"
@@ -117,7 +121,7 @@ def _page_range_to_marker_format(start_page: int | None, end_page: int | None) -
     is_flag=True,
     help="Show cache location and size after conversion",
 )
-@click.version_option(version="1.0.0", prog_name="pdf2md-ocr")
+@click.version_option(version="1.0.1", prog_name="pdf2md-ocr")
 def main(
     input_pdf: Path | None,
     output: Path | None,
@@ -171,8 +175,26 @@ def main(
     except ValueError as e:
         raise click.BadParameter(str(e))
 
+    # Get total page count if needed for page range conversion
+    total_pages = None
+    if start_page is not None and end_page is None:
+        # Need to get total pages to convert start-only range
+        try:
+            from pypdf import PdfReader
+            from pypdf.errors import PdfReadError
+            pdf_reader = PdfReader(str(input_pdf))
+            total_pages = len(pdf_reader.pages)
+        except (FileNotFoundError, OSError, PdfReadError) as e:
+            raise click.ClickException(
+                f"Failed to read PDF page count: {e}\n"
+                f"Please specify both --start-page and --end-page, or omit --start-page to process from page 1."
+            )
+
     # Build page range string for Marker
-    page_range = _page_range_to_marker_format(start_page, end_page)
+    try:
+        page_range = _page_range_to_marker_format(start_page, end_page, total_pages)
+    except ValueError as e:
+        raise click.BadParameter(str(e))
 
     # Display conversion info (to stderr if --stdout, unless --quiet)
     pdf_name = input_pdf.name
@@ -189,21 +211,44 @@ def main(
     from marker.models import create_model_dict
     from marker.output import text_from_rendered
 
-    # Load models (downloads ~2GB first time, then cached)
-    models = create_model_dict()
+    try:
+        # Load models (downloads ~2GB first time, then cached)
+        models = create_model_dict()
 
-    # Create converter with optional page range
-    if page_range:
-        from marker.config.parser import ConfigParser
-        config_parser = ConfigParser({"page_range": page_range})
-        converter = PdfConverter(
-            artifact_dict=models,
-            config=config_parser.generate_config_dict(),
-        )
-    else:
-        converter = PdfConverter(artifact_dict=models)
+        # Create converter with optional page range
+        if page_range:
+            from marker.config.parser import ConfigParser
+            config_parser = ConfigParser({"page_range": page_range})
+            converter = PdfConverter(
+                artifact_dict=models,
+                config=config_parser.generate_config_dict(),
+            )
+        else:
+            converter = PdfConverter(artifact_dict=models)
 
-    rendered = converter(str(input_pdf))
+        rendered = converter(str(input_pdf))
+    except (OSError, RuntimeError) as e:
+        error_msg = str(e)
+        error_msg_lower = error_msg.lower()
+        if ("libgobject" in error_msg_lower
+            or "weasyprint" in error_msg_lower):
+            raise click.ClickException(
+                f"System libraries required for PDF conversion are missing or not properly configured.\n\n"
+                f"pdf2md-ocr requires WeasyPrint, which depends on system libraries.\n"
+                f"Please install them for your operating system:\n\n"
+                f"macOS (with Homebrew):\n"
+                f"  brew install gobject-introspection pango\n"
+                f"  export DYLD_LIBRARY_PATH=\"/opt/homebrew/lib:$DYLD_LIBRARY_PATH\"\n\n"
+                f"Ubuntu/Debian:\n"
+                f"  sudo apt-get install libgobject-2.0-0 libpango-1.0-0\n\n"
+                f"Fedora/RHEL:\n"
+                f"  sudo dnf install gobject-introspection pango\n\n"
+                f"Windows:\n"
+                f"  Download and install GTK+ 3 from https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer\n\n"
+                f"For more details, see the System Requirements section in the README:\n"
+                f"  https://github.com/carloscasalar/pdf2md-ocr#system-requirements"
+            )
+        raise
 
     # Extract markdown text (returns tuple: text, extension, images)
     markdown_text, _, _ = text_from_rendered(rendered)
