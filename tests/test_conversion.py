@@ -380,12 +380,11 @@ class TestErrorHandling:
         project_root = Path(__file__).parent.parent
         input_pdf = project_root / "pdf-samples" / "only-text.pdf"
 
-        # Mock the PdfConverter to raise an OSError with libgobject in the message
+        # Mock create_model_dict to raise an OSError with libgobject in the message
         def mock_create_model_dict():
             raise OSError("Could not load libgobject-2.0.so.0")
 
-        import pdf2md_ocr.cli
-        monkeypatch.setattr("pdf2md_ocr.cli.create_model_dict", mock_create_model_dict)
+        monkeypatch.setattr("marker.models.create_model_dict", mock_create_model_dict)
 
         result = runner.invoke(main, [str(input_pdf)])
 
@@ -408,12 +407,11 @@ class TestErrorHandling:
         project_root = Path(__file__).parent.parent
         input_pdf = project_root / "pdf-samples" / "only-text.pdf"
 
-        # Mock to raise a RuntimeError with weasyprint in the message
+        # Mock create_model_dict to raise a RuntimeError with weasyprint in the message
         def mock_create_model_dict():
             raise RuntimeError("WeasyPrint initialization failed")
 
-        import pdf2md_ocr.cli
-        monkeypatch.setattr("pdf2md_ocr.cli.create_model_dict", mock_create_model_dict)
+        monkeypatch.setattr("marker.models.create_model_dict", mock_create_model_dict)
 
         result = runner.invoke(main, [str(input_pdf)])
 
@@ -435,8 +433,7 @@ class TestErrorHandling:
         def mock_create_model_dict():
             raise OSError("Could not load LIBGOBJECT-2.0.so.0")
 
-        import pdf2md_ocr.cli
-        monkeypatch.setattr("pdf2md_ocr.cli.create_model_dict", mock_create_model_dict)
+        monkeypatch.setattr("marker.models.create_model_dict", mock_create_model_dict)
 
         result = runner.invoke(main, [str(input_pdf)])
 
@@ -453,8 +450,7 @@ class TestErrorHandling:
         def mock_create_model_dict():
             raise RuntimeError("WEASYPRINT initialization failed")
 
-        import pdf2md_ocr.cli
-        monkeypatch.setattr("pdf2md_ocr.cli.create_model_dict", mock_create_model_dict)
+        monkeypatch.setattr("marker.models.create_model_dict", mock_create_model_dict)
 
         result = runner.invoke(main, [str(input_pdf)])
 
@@ -467,12 +463,11 @@ class TestErrorHandling:
         project_root = Path(__file__).parent.parent
         input_pdf = project_root / "pdf-samples" / "only-text.pdf"
 
-        # Mock to raise an OSError without WeasyPrint-related keywords
+        # Mock create_model_dict to raise an OSError without WeasyPrint-related keywords
         def mock_create_model_dict():
             raise OSError("Some other unrelated error")
 
-        import pdf2md_ocr.cli
-        monkeypatch.setattr("pdf2md_ocr.cli.create_model_dict", mock_create_model_dict)
+        monkeypatch.setattr("marker.models.create_model_dict", mock_create_model_dict)
 
         result = runner.invoke(main, [str(input_pdf)])
 
@@ -488,12 +483,11 @@ class TestErrorHandling:
         project_root = Path(__file__).parent.parent
         input_pdf = project_root / "pdf-samples" / "only-text.pdf"
 
-        # Mock to raise a RuntimeError without WeasyPrint-related keywords
+        # Mock create_model_dict to raise a RuntimeError without WeasyPrint-related keywords
         def mock_create_model_dict():
             raise RuntimeError("Some generic runtime error")
 
-        import pdf2md_ocr.cli
-        monkeypatch.setattr("pdf2md_ocr.cli.create_model_dict", mock_create_model_dict)
+        monkeypatch.setattr("marker.models.create_model_dict", mock_create_model_dict)
 
         result = runner.invoke(main, [str(input_pdf)])
 
