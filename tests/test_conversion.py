@@ -5,6 +5,7 @@ from pathlib import Path
 import tempfile
 import pytest
 from click.testing import CliRunner
+from pypdf import PdfReader
 
 from pdf2md_ocr.cli import main, _validate_page_range, _page_range_to_marker_format
 
@@ -376,8 +377,6 @@ class TestStartPageWithoutEndPage:
 
     def test_pypdf_reads_page_count_correctly(self):
         """Test that pypdf can read the page count from a multi-page PDF."""
-        from pypdf import PdfReader
-        
         project_root = Path(__file__).parent.parent
         input_pdf = project_root / "pdf-samples" / "three-page.pdf"
         
