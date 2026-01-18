@@ -369,3 +369,136 @@ class TestStandaloneCacheInfo:
 
         assert result.exit_code == 2
         assert "INPUT_PDF is required" in result.output
+
+
+class TestErrorHandling:
+    """Test error handling for missing system libraries."""
+
+    def test_oserror_with_libgobject_shows_installation_instructions(self, monkeypatch):
+        """Test that OSError containing 'libgobject' triggers helpful error message."""
+        runner = CliRunner()
+        project_root = Path(__file__).parent.parent
+        input_pdf = project_root / "pdf-samples" / "only-text.pdf"
+
+        # Mock the PdfConverter to raise an OSError with libgobject in the message
+        def mock_create_model_dict():
+            raise OSError("Could not load libgobject-2.0.so.0")
+
+        import pdf2md_ocr.cli
+        monkeypatch.setattr("pdf2md_ocr.cli.create_model_dict", mock_create_model_dict)
+
+        result = runner.invoke(main, [str(input_pdf)])
+
+        assert result.exit_code == 1
+        assert "System libraries required for PDF conversion are missing" in result.output
+        assert "WeasyPrint" in result.output
+        assert "macOS (with Homebrew):" in result.output
+        assert "brew install gobject-introspection pango" in result.output
+        assert "Ubuntu/Debian:" in result.output
+        assert "sudo apt-get install libgobject-2.0-0 libpango-1.0-0" in result.output
+        assert "Fedora/RHEL:" in result.output
+        assert "sudo dnf install gobject-introspection pango" in result.output
+        assert "Windows:" in result.output
+        assert "GTK+ 3" in result.output
+        assert "System Requirements" in result.output
+
+    def test_runtimeerror_with_weasyprint_shows_installation_instructions(self, monkeypatch):
+        """Test that RuntimeError containing 'weasyprint' triggers helpful error message."""
+        runner = CliRunner()
+        project_root = Path(__file__).parent.parent
+        input_pdf = project_root / "pdf-samples" / "only-text.pdf"
+
+        # Mock to raise a RuntimeError with weasyprint in the message
+        def mock_create_model_dict():
+            raise RuntimeError("WeasyPrint initialization failed")
+
+        import pdf2md_ocr.cli
+        monkeypatch.setattr("pdf2md_ocr.cli.create_model_dict", mock_create_model_dict)
+
+        result = runner.invoke(main, [str(input_pdf)])
+
+        assert result.exit_code == 1
+        assert "System libraries required for PDF conversion are missing" in result.output
+        assert "WeasyPrint" in result.output
+        assert "macOS (with Homebrew):" in result.output
+        assert "Ubuntu/Debian:" in result.output
+        assert "Fedora/RHEL:" in result.output
+        assert "Windows:" in result.output
+
+    def test_oserror_case_insensitive_libgobject(self, monkeypatch):
+        """Test that error detection is case-insensitive for 'libgobject'."""
+        runner = CliRunner()
+        project_root = Path(__file__).parent.parent
+        input_pdf = project_root / "pdf-samples" / "only-text.pdf"
+
+        # Test with different casing
+        def mock_create_model_dict():
+            raise OSError("Could not load LIBGOBJECT-2.0.so.0")
+
+        import pdf2md_ocr.cli
+        monkeypatch.setattr("pdf2md_ocr.cli.create_model_dict", mock_create_model_dict)
+
+        result = runner.invoke(main, [str(input_pdf)])
+
+        assert result.exit_code == 1
+        assert "System libraries required for PDF conversion are missing" in result.output
+
+    def test_runtimeerror_case_insensitive_weasyprint(self, monkeypatch):
+        """Test that error detection is case-insensitive for 'weasyprint'."""
+        runner = CliRunner()
+        project_root = Path(__file__).parent.parent
+        input_pdf = project_root / "pdf-samples" / "only-text.pdf"
+
+        # Test with different casing
+        def mock_create_model_dict():
+            raise RuntimeError("WEASYPRINT initialization failed")
+
+        import pdf2md_ocr.cli
+        monkeypatch.setattr("pdf2md_ocr.cli.create_model_dict", mock_create_model_dict)
+
+        result = runner.invoke(main, [str(input_pdf)])
+
+        assert result.exit_code == 1
+        assert "System libraries required for PDF conversion are missing" in result.output
+
+    def test_oserror_without_weasyprint_keywords_reraises(self, monkeypatch):
+        """Test that OSError without WeasyPrint keywords is re-raised."""
+        runner = CliRunner()
+        project_root = Path(__file__).parent.parent
+        input_pdf = project_root / "pdf-samples" / "only-text.pdf"
+
+        # Mock to raise an OSError without WeasyPrint-related keywords
+        def mock_create_model_dict():
+            raise OSError("Some other unrelated error")
+
+        import pdf2md_ocr.cli
+        monkeypatch.setattr("pdf2md_ocr.cli.create_model_dict", mock_create_model_dict)
+
+        result = runner.invoke(main, [str(input_pdf)])
+
+        assert result.exit_code == 1
+        # Should NOT show the helpful WeasyPrint installation instructions
+        assert "System libraries required for PDF conversion are missing" not in result.output
+        # Should show the original error message
+        assert "Some other unrelated error" in result.output
+
+    def test_runtimeerror_without_weasyprint_keywords_reraises(self, monkeypatch):
+        """Test that RuntimeError without WeasyPrint keywords is re-raised."""
+        runner = CliRunner()
+        project_root = Path(__file__).parent.parent
+        input_pdf = project_root / "pdf-samples" / "only-text.pdf"
+
+        # Mock to raise a RuntimeError without WeasyPrint-related keywords
+        def mock_create_model_dict():
+            raise RuntimeError("Some generic runtime error")
+
+        import pdf2md_ocr.cli
+        monkeypatch.setattr("pdf2md_ocr.cli.create_model_dict", mock_create_model_dict)
+
+        result = runner.invoke(main, [str(input_pdf)])
+
+        assert result.exit_code == 1
+        # Should NOT show the helpful WeasyPrint installation instructions
+        assert "System libraries required for PDF conversion are missing" not in result.output
+        # Should show the original error message
+        assert "Some generic runtime error" in result.output
