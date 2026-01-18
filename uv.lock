@@ -1111,7 +1111,7 @@ dev = [
 requires-dist = [
     { name = "click" },
     { name = "marker-pdf", specifier = "==1.10.1" },
-    { name = "pypdf" },
+    { name = "pypdf", specifier = "==6.6.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
     { name = "rich" },
 ]
